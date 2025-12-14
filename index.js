@@ -1,32 +1,29 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 
-import productsRouter from "./src/routes/products.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
+import productsRouter from "./src/routes/products.router.js"; // rutas protegidas
+import { authMiddleware } from "./src/middlewares/auth.middleware.js";
+import notFound from "./src/middlewares/not-found.js";
 
 const app = express();
 
 // Middlewares globales
-app.use(cors());
 app.use(express.json());
-
-// Rutas de productos
-
-app.use("/api/products", productsRouter);
-
-// Rutas de auth
-app.use("/api", authRouter);
 
 // Ruta raíz
 app.get("/", (req, res) => {
-  res.send("API funcionando. Usa /api/products para ver productos.");
+  res.json({ message: "Bienvenidos a nuestra API REST!" });
 });
 
+// Rutas de autenticación (públicas)
+app.use("/api/auth", authRouter);
+
+// Rutas de productos (protegidas con authMiddleware)
+app.use("/api/products", authMiddleware, productsRouter);
+
 // Middleware 404
-app.use((req, res) => {
-  res.status(404).json({ error: "Ruta no encontrada" });
-});
+app.use(notFound);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
@@ -37,5 +34,5 @@ app.use((err, req, res, next) => {
 });
 
 // Servidor
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
